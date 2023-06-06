@@ -23,8 +23,18 @@ class AFMPixel
     @segments = Array.new(segment_ids.size)
     segment_ids.each do |segment_id|
       # Take only height + vDef for now
-      heights_a = File.open("#{pixel_path}/segments/#{segment_id.to_s}/channels/height.dat", 'rb').read.unpack("V*")
-      vDef_a = File.open("#{pixel_path}/segments/#{segment_id.to_s}/channels/vDeflection.dat", 'rb').read.unpack("V*")
+
+      heights_a = File.open("#{pixel_path}/segments/#{segment_id.to_s}/channels/height.dat", 'rb').read.unpack("N*").map {|num| num -= 4294967296 if num >= 2147483648
+        # Encoder scaling multiplier and offset
+        num = num * 8.889562452419094E-9 + 19.08322000444478
+        # Conversion-set scaling multiplier and offset
+        num = num * -1.3095731367786284E-7 + 4.999087227523665E-6
+        # μm looks better
+        num = num * 1E6
+    }
+      vDef_a = File.open("#{pixel_path}/segments/#{segment_id.to_s}/channels/vDeflection.dat", 'rb').read.unpack("N*").map {|num| num -= 4294967296 if num >= 2147483648
+      # Encoder scaling. Conversion set absent. mV is mV.
+      num = num*5.571976795178424E-9+4.3918941083355846E-4}
       puts "doing segment #{segment_id} got #{heights_a.size} - #{vDef_a.size}"
       @segments[segment_id] = (GSL::Matrix[heights_a, vDef_a]).transpose
     end
@@ -46,7 +56,7 @@ set title 'pixel #{@no.to_s}'
 set terminal svg standalone mouse
 set output '#{outdir}/#{@no.to_s}.svg'
 plot #{plots.join(", \\\n")}
-set xrange [GPVAL_X_MAX:GPVAL_X_MIN]
+#set xrange [GPVAL_X_MAX:GPVAL_X_MIN]
 set ylabel 'vDeflection'
 set xlabel 'height'
 set output '#{outdir}/#{@no.to_s}.svg'
@@ -67,6 +77,7 @@ puts "Finding pixels"
 pxes = Dir.glob unzipped+'/index/*'
 puts "Found #{pxes.size} pixels"
 px = AFMPixel.new(unzipped, 0)
-px.plot('px999')
+px.plot('outputs/px0')
 
-binding.pry
+px = AFMPixel.new(unzipped, 1)
+px.plot('outputs/px1')

@@ -1,7 +1,7 @@
 require 'pry'
 
-pixelpath = './mock_datafile/0'
-dats = Dir.glob pixelpath+'/segments/0/*.dat'
+pixelpath = './mock_datafile/index/0'
+dats = Dir.glob pixelpath+'/segments/0/channels/*.dat'
 raw = File.open(dats[0], 'rb').read
 puts raw.size
 
