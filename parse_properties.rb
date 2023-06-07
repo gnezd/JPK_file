@@ -26,7 +26,6 @@ def read_properties(fin)
         node
       end
       
-      
       sprout = config
       while node = tags.shift
         sprout[node] = {} unless sprout[node]
