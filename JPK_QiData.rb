@@ -45,13 +45,54 @@ class JPK_QiData
     raise "lcd-infos(#{@properties['lcd-infos']['count']}) != lcd-info.size (#{@properties['lcd-info'].size})" unless @properties['lcd-infos']['count'] == @properties['lcd-info'].size
     @channels = (0..@properties['lcd-info'].size-1).map {|ch| @properties['lcd-info'][ch]}
 
-    @conversion = Array.new(@channels.size)
-    
     # Get channel .dat file name from 1st pixel 0th segment, again assume it's constancy
     exmpl_segment_header = read_properties(@scratch_path+'/index/0/segments/0/segment-header.properties')
     channel_names = exmpl_segment_header['channels']['list'].split ' '
+    raise "Channel names mismatch" unless channel_names == @channels.map{|ch| ch['channel']['name']}
+    
+    # Inject the .dat paths and get conversion "passes" for each channel
+    @decoders = Array.new(@channels.size)
+    @conversions = Array.new(@channels.size) {[]}
+    (0..@channels.size-1).each do |ch|
+      # Path to .dat
+      @channels[ch]['channel']['dat_path'] = exmpl_segment_header['channel'][channel_names[ch]]['data']['file']['name']
+      # Conversion pass raw to V
+      # Convention: ax + b, stored as [a, b]
+      @decoders[ch] = [
+        @properties['lcd-info'][ch]['encoder']['scaling']['multiplier'],
+        @properties['lcd-info'][ch]['encoder']['scaling']['offset']
+      ]
+      # V to m if exists
+      defined_conversions = (@properties['lcd-info'][ch]['conversion-set']['conversion'].filter {|k,v| v['defined']=='true'}).keys
+      defined_conversions.each do |conversion|
+        # In form of [name, a, b]
+        @conversions[ch].push [
+          conversion,
+          @properties['lcd-info'][0]['conversion-set']['conversion'][conversion]['scaling']['multiplier'],
+          @properties['lcd-info'][0]['conversion-set']['conversion'][conversion]['scaling']['offset']
+        ]
+      end
+    end
   end
-  public
+
+  # Extract pixel i, segment s
+  def at(i, s, options={})
+    raise "i (#{i}}) out of bound (#{@size})" if i > @size
+    raise "s (#{s}) out of bound" if s > 1
+    segment_path = "#{@scratch_path}/index/#{i.to_s}/segments/#{s.to_s}"
+    properties = read_properties "#{segment_path}/segment-header.properties"
+
+    data = Array.new(@channels.size) {Array.new(properties['force-segment-header']['num-points']) {0.0}}
+    @channels.each do |ch|
+      raw = File.open("#{segment_path}/channels/#{ch['channel'['dat_path']]}", "r") {|f| f.read.unpack("N*").map{|n| num >= 2147483648 ? num -= 4294967296 : num}}
+    end
+  end
+
+  def show_conversions
+    puts "Decoders: #{@decoders}"
+    puts "Conversionss: #{@conversions}"
+  end
+
   def read_properties(fin)
     lines = File.open(fin, 'r') {|f| f.readlines}
     config = {}

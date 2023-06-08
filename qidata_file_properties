@@ -359,7 +359,8 @@
     "channel"=>
    {
     "type"=>"channel",
-     "name"=>"height"
+     "name"=>"height",
+     "dat_path"=>"channels/height.dat"
    },
     "unit"=>
    {
@@ -448,7 +449,8 @@
     "channel"=>
    {
     "type"=>"channel",
-     "name"=>"vDeflection"
+     "name"=>"vDeflection",
+     "dat_path"=>"channels/vDeflection.dat"
    },
     "unit"=>
    {
@@ -505,7 +507,8 @@
     "channel"=>
    {
     "type"=>"channel",
-     "name"=>"hDeflection"
+     "name"=>"hDeflection",
+     "dat_path"=>"channels/hDeflection.dat"
    },
     "unit"=>
    {
@@ -562,7 +565,8 @@
     "channel"=>
    {
     "type"=>"channel",
-     "name"=>"measuredHeight"
+     "name"=>"measuredHeight",
+     "dat_path"=>"channels/measuredHeight.dat"
    },
     "unit"=>
    {
